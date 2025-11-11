@@ -184,8 +184,8 @@
   <script>
     // ====== 設定 ======
     const APP_VERSION = '5.0.0';
-    const GAS_URL = 'https://script.google.com/macros/s/AKfycby59K37UyAo3-ew0TlCLiiHmVF5Bna_A2zWf9HNy6lfGMRy9p7uP71SgjYG3DM2Roa2/exec'; // 
-    const API_TOKEN = 'b7d9f2k4m6p8q1r3t5v7w9x2c4e6g8h0'; // 
+    const GAS_URL = 'https://script.google.com/macros/s/AKfycby59K37UyAo3-ew0TlCLiiHmVF5Bna_A2zWf9HNy6lfGMRy9p7uP71SgjYG3DM2Roa2/exec'; // GASのWebアプリURLを設定
+    const API_TOKEN = 'b7d9f2k4m6p8q1r3t5v7w9x2c4e6g8h0'; // GASのAPI_TOKENを設定
 
     // ====== スタンプデータ定義 ======
     const STAMPS = {
@@ -502,49 +502,41 @@
       if (el) el.textContent = 'CSVを端末に保存しました。';
     }
     
-async function submitCSV() {
-  const el = document.getElementById('submitMsg');
-  if (el) el.textContent = '送信中...';
-  
-  try {
-    const employeeId = localStorage.getItem('employee_id') || '';
-    const csv = generateCSV();
-    
-    // JSONP方式で送信
-    const callbackName = 'gasCallback' + Date.now();
-    const url = GAS_URL + 
-      '?token=' + encodeURIComponent(API_TOKEN) +
-      '&employee_id=' + encodeURIComponent(employeeId) +
-      '&csv_data=' + encodeURIComponent(csv) +
-      '&callback=' + callbackName;
-    
-    // コールバック関数を定義
-    window[callbackName] = function(data) {
-      if (data && data.success) {
-        if (el) el.textContent = '提出が完了しました。ご協力ありがとうございます。';
-      } else {
-        throw new Error(data.message || '不明なエラー');
+    function submitCSV() {
+      const el = qs('#submitMsg');
+      const csv = buildCSV();
+      if (!GAS_URL) {
+        if (el) el.textContent = '送信先URLが未設定です。管理者へご連絡ください。';
+        return;
       }
-      // クリーンアップ
-      delete window[callbackName];
-      if (script.parentNode) document.head.removeChild(script);
-    };
-    
-    // scriptタグで送信
-    const script = document.createElement('script');
-    script.src = url;
-    script.onerror = function() {
-      if (el) el.textContent = '提出に失敗しました。時間をおいて再試行するか、CSV保存→手動提出をご利用ください。';
-      delete window[callbackName];
-      if (script.parentNode) document.head.removeChild(script);
-    };
-    document.head.appendChild(script);
-    
-  } catch (e) {
-    console.error(e);
-    if (el) el.textContent = '提出に失敗しました。時間をおいて再試行するか、CSV保存→手動提出をご利用ください。';
-  }
-}
+      if (el) el.textContent = '送信中…';
+      
+      const employeeId = localStorage.getItem('employee_id') || '';
+      const url = GAS_URL + 
+        '?callback=submitCallback' +
+        '&token=' + encodeURIComponent(API_TOKEN) +
+        '&employeeId=' + encodeURIComponent(employeeId) +
+        '&csv=' + encodeURIComponent(csv);
+      
+      // JSONP用のコールバック関数を定義
+      window.submitCallback = function(data) {
+        const el = qs('#submitMsg');
+        if (data && (data.ok || data.status === 'ok')) {
+          if (el) el.textContent = '提出が完了しました。ご協力ありがとうございます。';
+        } else {
+          if (el) el.textContent = '提出に失敗しました: ' + (data?.error || '不明なエラー');
+        }
+      };
+      
+      // JSONP送信
+      const script = document.createElement('script');
+      script.src = url;
+      script.onerror = function() {
+        const el = qs('#submitMsg');
+        if (el) el.textContent = '提出に失敗しました。時間をおいて再試行するか、CSV保存→手動提出をご利用ください。';
+      };
+      document.body.appendChild(script);
+    }
 
     // ====== 社員ID管理 ======
     function changeEmployeeId() {
