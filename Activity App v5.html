@@ -502,39 +502,49 @@
       if (el) el.textContent = 'CSVを端末に保存しました。';
     }
     
-    async function submitCSV() {
-      const el = qs('#submitMsg');
-      const csv = buildCSV();
-      if (!GAS_URL) {
-        if (el) el.textContent = '送信先URLが未設定です。管理者へご連絡ください。';
-        return;
+async function submitCSV() {
+  const el = document.getElementById('submitStatus');
+  el.textContent = '送信中...';
+  
+  try {
+    const employeeId = localStorage.getItem('employee_id') || '';
+    const csv = generateCSV();
+    
+    // JSONP方式で送信
+    const callbackName = 'gasCallback' + Date.now();
+    const url = GAS_URL + 
+      '?token=' + encodeURIComponent(API_TOKEN) +
+      '&employee_id=' + encodeURIComponent(employeeId) +
+      '&csv_data=' + encodeURIComponent(csv) +
+      '&callback=' + callbackName;
+    
+    // コールバック関数を定義
+    window[callbackName] = function(data) {
+      if (data && data.success) {
+        el.textContent = '提出が完了しました。ご協力ありがとうございます。';
+      } else {
+        throw new Error(data.message || '不明なエラー');
       }
-      if (el) el.textContent = '送信中…';
-      try {
-        const employeeId = localStorage.getItem('employee_id') || '';
-        const payload = {
-          csvBase64: btoa(unescape(encodeURIComponent(csv))),
-          employeeId: employeeId,
-          appVersion: APP_VERSION,
-          filename: `activity_${todayKey()}`
-        };
-        const res = await fetch(GAS_URL + '?token=' + API_TOKEN, {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify(payload)
-        });
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        const data = await res.json().catch(() => ({ok: false}));
-        if (data && (data.ok || data.status === 'ok')) {
-          if (el) el.textContent = '提出が完了しました。ご協力ありがとうございます。';
-        } else {
-          throw new Error(data?.error || '不明なエラー');
-        }
-      } catch (e) {
-        console.error(e);
-        if (el) el.textContent = '提出に失敗しました。時間をおいて再試行するか、CSV保存→手動提出をご利用ください。';
-      }
-    }
+      // クリーンアップ
+      delete window[callbackName];
+      document.head.removeChild(script);
+    };
+    
+    // scriptタグで送信
+    const script = document.createElement('script');
+    script.src = url;
+    script.onerror = function() {
+      el.textContent = '提出に失敗しました。時間をおいて再試行するか、CSV保存→手動提出をご利用ください。';
+      delete window[callbackName];
+      document.head.removeChild(script);
+    };
+    document.head.appendChild(script);
+    
+  } catch (e) {
+    console.error(e);
+    el.textContent = '提出に失敗しました。時間をおいて再試行するか、CSV保存→手動提出をご利用ください。';
+  }
+}
 
     // ====== 社員ID管理 ======
     function changeEmployeeId() {
