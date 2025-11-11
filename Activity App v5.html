@@ -503,8 +503,8 @@
     }
     
 async function submitCSV() {
-  const el = document.getElementById('submitStatus');
-  el.textContent = '送信中...';
+  const el = document.getElementById('submitMsg');
+  if (el) el.textContent = '送信中...';
   
   try {
     const employeeId = localStorage.getItem('employee_id') || '';
@@ -521,28 +521,28 @@ async function submitCSV() {
     // コールバック関数を定義
     window[callbackName] = function(data) {
       if (data && data.success) {
-        el.textContent = '提出が完了しました。ご協力ありがとうございます。';
+        if (el) el.textContent = '提出が完了しました。ご協力ありがとうございます。';
       } else {
         throw new Error(data.message || '不明なエラー');
       }
       // クリーンアップ
       delete window[callbackName];
-      document.head.removeChild(script);
+      if (script.parentNode) document.head.removeChild(script);
     };
     
     // scriptタグで送信
     const script = document.createElement('script');
     script.src = url;
     script.onerror = function() {
-      el.textContent = '提出に失敗しました。時間をおいて再試行するか、CSV保存→手動提出をご利用ください。';
+      if (el) el.textContent = '提出に失敗しました。時間をおいて再試行するか、CSV保存→手動提出をご利用ください。';
       delete window[callbackName];
-      document.head.removeChild(script);
+      if (script.parentNode) document.head.removeChild(script);
     };
     document.head.appendChild(script);
     
   } catch (e) {
     console.error(e);
-    el.textContent = '提出に失敗しました。時間をおいて再試行するか、CSV保存→手動提出をご利用ください。';
+    if (el) el.textContent = '提出に失敗しました。時間をおいて再試行するか、CSV保存→手動提出をご利用ください。';
   }
 }
 
