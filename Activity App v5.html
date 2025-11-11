@@ -1,0 +1,622 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>行動支援アプリ v5.0</title>
+  <style>
+    /* ===== Theme ===== */
+    :root{
+      --bg:#dff3f8; --panel:#ffffff; --text:#111827; --muted:#6b7280; --border:#cfe7ee;
+      --accent:#22c55e; --accent-press:#16a34a; --warn:#fbbf24; --badge:#0ea5e9; --card:#f6fbfd;
+      --shadow:0 8px 20px rgba(0,0,0,.08);
+      --cat-ex:#22c55e; --cat-at:#3b82f6; --cat-life:#f59e0b; --cat-list:#0ea5e9;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;background:var(--bg);color:var(--text);font-family:Meiryo, "Hiragino Kaku Gothic ProN", "Yu Gothic", system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans JP", sans-serif;}
+    .hidden{display:none}
+
+    /* badges & UI */
+    h1,h2,h3,.btn,.badge{display:inline-flex;align-items:center;gap:6px;padding:2px 10px;border-radius:999px;font-size:12px;color:#075985;background:#e0f2fe;border:1px solid #bae6fd}
+    .badge.accent{background:#dcfce7;color:#166534;border-color:#bbf7d0}
+    .badge.warn{background:#fef3c7;color:#78350f;border-color:#fde68a}
+    .badge.new{background:#fde68a;color:#92400e;border-color:#fcd34d}
+    .badge.cat-ex{background:#dcfce7;color:#166534;border-color:#bbf7d0}
+    .badge.cat-at{background:#dbeafe;color:#1e40af;border-color:#bfdbfe}
+    .badge.cat-life{background:#fef3c7;color:#78350f;border-color:#fde68a}
+    .badge.list{background:#ffffff;color:#0c4a6e;border:2px dashed #93c5fd;border-radius:8px}
+
+    .wrap{max-width:900px;margin:0 auto;padding:16px}
+    header{position:sticky;top:0;z-index:30;background:linear-gradient(180deg,rgba(255,255,255,.9),rgba(255,255,255,.6));backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);padding:12px 16px}
+    header h1{font-size:18px;margin:0}
+
+    .btn{appearance:none;border:1px solid transparent;border-radius:12px;padding:10px 14px;font-weight:700;color:white;background:var(--accent);cursor:pointer;box-shadow:var(--shadow)}
+    .btn:active{background:var(--accent-press)}
+    .btn.secondary{background:#e2f6e9;color:#065f46;border-color:#a7f3d0}
+    .btn.ghost{background:#eef7fa;color:#0c4a6e;border:1px solid #c7e6f3}
+    .btn:disabled{opacity:.6;cursor:not-allowed}
+
+    .panel{border:1px solid var(--border);background:var(--panel);border-radius:16px;padding:16px;box-shadow:var(--shadow)}
+    .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;margin-top:12px}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px;min-height:160px}
+    .card.cat-exercise{border-top:4px solid var(--cat-ex)}
+    .card.cat-attention{border-top:4px solid var(--cat-at)}
+    .card.cat-lifestyle{border-top:4px solid var(--cat-life)}
+    .card.cat-list{border-top:4px solid var(--cat-list)}
+
+    .title{font-weight:800;font-size:16px}
+    .sub{color:var(--muted);font-size:13px;line-height:1.5}
+    .inline{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+
+    .tabbar{position:sticky;bottom:0;left:0;right:0;background:rgba(255,255,255,.85);backdrop-filter:blur(6px);border-top:1px solid var(--border);display:flex;gap:6px;justify-content:space-between;padding:10px 12px;z-index:40}
+    .tab{flex:1;display:flex;align-items:center;justify-content:center;background:#ffffff;border:1px solid var(--border);color:var(--text);border-radius:12px;padding:10px;font-weight:700;cursor:pointer}
+    .tab.active{outline:2px solid var(--accent)}
+
+    .small{font-size:12px;color:var(--muted)}
+    .calendar{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+    .weekday{font-weight:700;color:#0f172a;text-align:center}
+    .day{aspect-ratio:1/1;background:#fff;border:1px solid var(--border);border-radius:10px;display:flex;flex-direction:column;justify-content:space-between;padding:6px}
+    .day .num{font-weight:700}
+    .dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+    .dot.g{background:var(--accent)} .dot.b{background:#0ea5e9} .dot.y{background:#fbbf24}
+
+    /* 社員ID入力画面 */
+    .input-group{margin:16px 0}
+    .input-group label{display:block;margin-bottom:6px;font-weight:700}
+    .input-group input{width:100%;padding:10px;border:1px solid var(--border);border-radius:8px;font-size:14px}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1 id="appTitle">行動支援アプリ</h1>
+      <button class="btn ghost" id="toMenuBtn" aria-controls="menuView">メニュー</button>
+    </header>
+
+    <!-- Step0: 同意画面 -->
+    <section id="consentView" class="panel hidden" aria-live="polite">
+      <h2>行動支援アプリ利用に関する同意書</h2>
+      <div class="small">
+        <p>・本アプリは端末内のローカル保存で動作し、サーバー送信は行いません。</p>
+        <p>・記録はCSVで出力し、各社指定の方法で提出します。</p>
+        <p>・本アプリの利用目的が健康づくり・行動支援の一環であり、個人の評価等には用いられません。</p>
+      </div>
+      <div class="inline" style="margin-top:10px">
+        <label><input type="checkbox" id="consentCheck"/> 同意します</label>
+        <button class="btn" id="consentBtn" disabled>次へ</button>
+      </div>
+    </section>
+
+    <!-- Step0.5: 社員ID入力 -->
+    <section id="employeeIdView" class="panel hidden">
+      <h2>社員ID登録</h2>
+      <p class="small">最初に一度だけ社員IDを登録してください。</p>
+      <div class="input-group">
+        <label for="employeeIdInput">社員ID</label>
+        <input type="text" id="employeeIdInput" placeholder="例: 12345" />
+      </div>
+      <button class="btn" id="employeeIdBtn">登録してスタート</button>
+    </section>
+
+    <!-- HOME -->
+    <section id="homeView" class="panel hidden">
+      <div class="inline" style="justify-content:space-between">
+        <div class="inline"><span class="badge">自由に選べる！</span><span class="small">「スタンプ一覧」から好きな項目を選択できます</span></div>
+      </div>
+      <h3 style="margin:18px 4px 6px">今日のおすすめスタンプ</h3>
+      <div class="cards" id="recommendList"></div>
+      <div class="cards">
+        <article class="card cat-list" onclick="show('stampsView')" style="cursor:pointer">
+          <div class="inline"><span class="badge list">一覧</span><span class="badge accent">自由選択</span></div>
+          <div class="title">すべてのスタンプを見る</div>
+          <div class="sub">全30種。カテゴリから自由に選んで押せます。</div>
+          <div class="inline" style="gap:8px; margin-top:auto"><button class="btn ghost">見る</button></div>
+        </article>
+      </div>
+      <div class="panel" style="margin-top:14px">
+        <div class="inline" style="justify-content:space-between;align-items:center">
+          <div><strong>本日の取り組み</strong><div class="small"><span id="dayCount">0</span> 回</div></div>
+        </div>
+        <div class="inline" style="justify-content:space-between;align-items:center;margin-top:10px">
+          <div><strong>今週の取り組み</strong><div class="small"><span id="weekCount">0</span> 回</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- スタンプ一覧 -->
+    <section id="stampsView" class="panel hidden">
+      <div class="inline" style="justify-content:space-between;align-items:center">
+        <h3 style="margin:0">スタンプ一覧（全30）</h3>
+        <button class="btn ghost" onclick="show('homeView')">ホームへ戻る</button>
+      </div>
+      <div class="cards" id="stampsList"></div>
+    </section>
+
+    <!-- カレンダー -->
+    <section id="calendarView" class="panel hidden">
+      <div class="inline" style="justify-content:space-between;align-items:center">
+        <div class="inline" style="gap:8px;align-items:center">
+          <button class="btn ghost" id="prevMonthBtn" aria-label="前の月へ">◀︎</button>
+          <h3 id="calHeader" style="margin:0">2025年11月</h3>
+          <button class="btn ghost" id="nextMonthBtn" aria-label="次の月へ">▶︎</button>
+        </div>
+        <button class="btn ghost" onclick="show('homeView')">ホームへ戻る</button>
+      </div>
+      <div class="small" style="margin:6px 0 10px">色の目安：<span class="dot g"></span> 実施多め / <span class="dot b"></span> 標準 / <span class="dot y"></span> 少なめ</div>
+      <div class="calendar" id="calendarGrid" aria-live="polite"></div>
+    </section>
+
+    <!-- メニュー -->
+    <section id="menuView" class="panel hidden">
+      <div class="menu-list" style="display:grid;gap:10px">
+        <div class="inline" style="justify-content:space-between;align-items:center;border:1px solid var(--border);background:var(--panel);border-radius:14px;padding:14px">
+          <span class="label" style="font-weight:800">取り組み記録の提出</span>
+          <button class="btn ghost" onclick="show('submitView')">提出</button>
+        </div>
+        <div class="inline" style="justify-content:space-between;align-items:center;border:1px solid var(--border);background:var(--panel);border-radius:14px;padding:14px">
+          <span class="label" style="font-weight:800">社員ID変更</span>
+          <button class="btn ghost" onclick="changeEmployeeId()">変更</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 提出 -->
+    <section id="submitView" class="panel hidden">
+      <h3 style="margin-top:0">取り組み記録の提出</h3>
+      <p class="small">CSVを端末へ保存、または管理者指定の提出先へ送信します。</p>
+      <div class="inline" style="gap:10px;flex-wrap:wrap">
+        <button class="btn" id="exportBtn">CSVを保存</button>
+        <button class="btn secondary" id="submitBtn">提出（GAS経由）</button>
+      </div>
+      <p id="submitMsg" class="small" style="margin-top:8px"></p>
+      <button class="btn ghost" style="margin-top:8px" onclick="show('menuView')">メニューに戻る</button>
+    </section>
+
+    <nav class="tabbar">
+      <button class="tab" id="homeTab" aria-controls="homeView">ホーム</button>
+      <button class="tab" id="stampsTab" aria-controls="stampsView">スタンプ</button>
+      <button class="tab" id="calendarTab" aria-controls="calendarView">カレンダー</button>
+      <button class="tab" id="menuTab" aria-controls="menuView">メニュー</button>
+    </nav>
+  </div>
+
+  <script>
+    // ====== 設定 ======
+    const APP_VERSION = '5.0.0';
+    const GAS_URL = 'https://script.google.com/macros/s/AKfycby59K37UyAo3-ew0TlCLiiHmVF5Bna_A2zWf9HNy6lfGMRy9p7uP71SgjYG3DM2Roa2/exec'; // 
+    const API_TOKEN = 'b7d9f2k4m6p8q1r3t5v7w9x2c4e6g8h0'; // 
+
+    // ====== スタンプデータ定義 ======
+    const STAMPS = {
+      exercise: [
+        {id:'core1',cat:'運動',title:'コアトレ1（座位）',desc:'「骨盤のコントロール」を手に入れて腰痛予防！',url:'',video:true},
+        {id:'core2',cat:'運動',title:'コアトレ2（座位）',desc:'骨盤と足の連動性で日々の作業を「省エネ」！',url:'',video:true},
+        {id:'chest',cat:'運動',title:'チェストストレッチ（座位）',desc:'気分転換の簡単な肩甲骨エクササイズ',url:'',video:true},
+        {id:'shoulder',cat:'運動',title:'ショルダーローテーション（座位）',desc:'綺麗な円を描く肩の動きを手に入れる',url:'',video:true},
+        {id:'heel',cat:'運動',title:'ヒールレイズ（立位）',desc:'ふくらはぎを鍛えて立ち仕事に対応！',url:'',video:true},
+        {id:'twist',cat:'運動',title:'ツイストリーチ（立位）',desc:'くぐり動作の動きをスムーズにするために',url:'https://youtu.be/CqqOfgSMOAs',video:true}
+      ],
+      high: [
+        {id:'jack',cat:'高強度',title:'ジャックナイフストレッチ（立位）',desc:'20秒で前屈が柔らかくなる！？',url:'https://youtu.be/nAP1QCuUdAY',video:true},
+        {id:'balance',cat:'高強度',title:'バランスチャレンジ（立位）',desc:'片脚立ちの極意を手に入れよう！',url:'',video:true},
+        {id:'drawing',cat:'高強度',title:'お絵描きバランス（立位）',desc:'遊びに見えて難易度高いバランス練習',url:'https://youtu.be/nanwI0Jf4Q8',video:true},
+        {id:'banzai',cat:'高強度',title:'全身バンザイ（立位）',desc:'トータルエクササイズ！強度高め',url:'https://youtu.be/G4Neqz-dsuA',video:true}
+      ],
+      attention: [
+        {id:'att1',cat:'注意',title:'注意Lv1',desc:'短時間の基礎',url:'',video:true},
+        {id:'att2',cat:'注意',title:'注意Lv2',desc:'基礎＋リズム',url:'',video:true},
+        {id:'att3',cat:'注意',title:'注意Lv3',desc:'条件付き選択',url:'',video:true},
+        {id:'att4',cat:'注意',title:'注意Lv4',desc:'干渉下の注意',url:'',video:true},
+        {id:'att5',cat:'注意',title:'注意Lv5',desc:'現場型応用',url:'',video:true},
+        {id:'attfruit',cat:'注意',title:'注意野菜フルーツ',desc:'言語→視覚連動',url:'',video:true}
+      ],
+      life: [
+        {id:'life1',cat:'生活',title:'移動は大股意識',desc:'つま先で地面を蹴って進む',url:'',video:false},
+        {id:'life2',cat:'生活',title:'階段優先で移動',desc:'安全の範囲で積極的に階段利用',url:'',video:false},
+        {id:'life3',cat:'生活',title:'午後はカフェイン控えめ',desc:'睡眠の質を守る',url:'',video:false},
+        {id:'life4',cat:'生活',title:'間食はたんぱく質寄せ',desc:'小腹満たしも体づくり寄せに',url:'',video:false},
+        {id:'life5',cat:'生活',title:'最初に野菜一口',desc:'血糖スパイク予防',url:'',video:false},
+        {id:'life6',cat:'生活',title:'就寝前ルーティン5分',desc:'軽い準備で睡眠スイッチON',url:'',video:false},
+        {id:'life7',cat:'生活',title:'朝の採光1分',desc:'遮光カーテン開けるだけでもOK',url:'',video:false},
+        {id:'life8',cat:'生活',title:'椅子に座る時は優しく',desc:'「落ちない」で「座る」',url:'',video:false},
+        {id:'life9',cat:'生活',title:'歯磨きは片脚立ちで',desc:'洗面台を支点に安全確保で',url:'',video:false},
+        {id:'life10',cat:'生活',title:'休憩時間の雑談を1分',desc:'仕事と関係ない話題1つ',url:'',video:false},
+        {id:'life11',cat:'生活',title:'アイコンタクトを意識した仕事',desc:'相手の目を一度しっかり見る',url:'',video:false},
+        {id:'life12',cat:'生活',title:'動作の順番を声に出して確認',desc:'1フレーズでOK',url:'',video:false},
+        {id:'life13',cat:'生活',title:'ハンドリングは膝を使う',desc:'腕じゃなく下半身で',url:'',video:false},
+        {id:'life14',cat:'生活',title:'目線を遠くへ',desc:'30～60分ごとに遠くへ',url:'',video:false}
+      ]
+    };
+
+    // 全スタンプを1つの配列に
+    const ALL_STAMPS = [...STAMPS.exercise, ...STAMPS.high, ...STAMPS.attention, ...STAMPS.life];
+
+    // ====== ユーティリティ ======
+    const qs = (s) => document.querySelector(s);
+    const qsa = (s) => Array.from(document.querySelectorAll(s));
+
+    // ====== カウント保存 ======
+    function todayKey() {
+      const d = new Date();
+      return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+    }
+    function weekKey() {
+      const d = new Date();
+      const onejan = new Date(d.getFullYear(), 0, 1);
+      const week = Math.ceil((((d - onejan) / 86400000) + onejan.getDay() + 1) / 7);
+      return `${d.getFullYear()}-W${week}`;
+    }
+    function loadCounts() {
+      const dk = todayKey();
+      if (localStorage.getItem('day_key') !== dk) {
+        localStorage.setItem('day_key', dk);
+        localStorage.setItem('day_count', '0');
+      }
+      const wk = weekKey();
+      if (localStorage.getItem('week_key') !== wk) {
+        localStorage.setItem('week_key', wk);
+        localStorage.setItem('week_count', '0');
+      }
+    }
+    function incrementDay() {
+      const n = parseInt(localStorage.getItem('day_count') || '0', 10) + 1;
+      localStorage.setItem('day_count', String(n));
+    }
+    function incrementWeek() {
+      const n = parseInt(localStorage.getItem('week_count') || '0', 10) + 1;
+      localStorage.setItem('week_count', String(n));
+    }
+    function updateCounters() {
+      const dc = qs('#dayCount');
+      const wc = qs('#weekCount');
+      if (dc) dc.textContent = localStorage.getItem('day_count') || '0';
+      if (wc) wc.textContent = localStorage.getItem('week_count') || '0';
+    }
+
+    // ====== 画面切替 ======
+    const KNOWN_VIEWS = ['consentView', 'employeeIdView', 'homeView', 'stampsView', 'calendarView', 'menuView', 'submitView'];
+    function safeClass(op, el, cls) {
+      if (el) {
+        el.classList[op](cls);
+      }
+    }
+    function show(id) {
+      KNOWN_VIEWS.forEach(v => {
+        const el = qs('#' + v);
+        safeClass('add', el, 'hidden');
+      });
+      const target = qs('#' + id);
+      safeClass('remove', target, 'hidden');
+      const tabs = [{id: 'homeView', tab: '#homeTab'}, {id: 'stampsView', tab: '#stampsTab'}, {id: 'calendarView', tab: '#calendarTab'}, {id: 'menuView', tab: '#menuTab'}];
+      tabs.forEach(t => {
+        const el = qs(t.tab);
+        if (el) el.classList.remove('active');
+      });
+      const active = tabs.find(t => t.id === id);
+      if (active) {
+        const el = qs(active.tab);
+        if (el) el.classList.add('active');
+      }
+      const titleMap = {homeView: '今日のチャレンジ', stampsView: 'スタンプ一覧', calendarView: 'カレンダー', menuView: 'メニュー', consentView: '同意', employeeIdView: '社員ID登録', submitView: '提出'};
+      const at = qs('#appTitle');
+      if (at) at.textContent = titleMap[id] || '行動支援アプリ';
+    }
+
+    // ====== 完了処理 ======
+    function markDone(stampId) {
+      incrementDay();
+      incrementWeek();
+      updateCounters();
+      
+      // カレンダーにも記録
+      const today = new Date();
+      const key = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+      const map = readDateCounts();
+      map[key] = (map[key] || 0) + 1;
+      writeDateCounts(map);
+      
+      // スタンプ履歴保存
+      saveStampLog(stampId);
+      
+      // カレンダー更新
+      const cal = qs('#calendarView');
+      if (cal && !cal.classList.contains('hidden')) renderCalendar(currentCal.y, currentCal.m);
+    }
+
+    // ====== スタンプ履歴 ======
+    function saveStampLog(stampId) {
+      try {
+        const logs = JSON.parse(localStorage.getItem('stamp_logs') || '[]');
+        logs.push({
+          stampId: stampId,
+          timestamp: new Date().toISOString(),
+          date: todayKey()
+        });
+        localStorage.setItem('stamp_logs', JSON.stringify(logs));
+      } catch (e) {
+        console.error('Failed to save stamp log:', e);
+      }
+    }
+
+    // ====== カレンダー ======
+    const CAL_START = {y: 2025, m: 11};
+    function getDaysInMonth(y, m) {
+      return new Date(y, m, 0).getDate();
+    }
+    function getFirstWeekday(y, m) {
+      return new Date(y, m - 1, 1).getDay();
+    }
+    function readDateCounts() {
+      try {
+        return JSON.parse(localStorage.getItem('date_counts') || '{}');
+      } catch (e) {
+        return {};
+      }
+    }
+    function writeDateCounts(map) {
+      localStorage.setItem('date_counts', JSON.stringify(map));
+    }
+    let currentCal = {y: CAL_START.y, m: CAL_START.m};
+    function renderCalendar(y, m) {
+      const grid = qs('#calendarGrid');
+      const head = qs('#calHeader');
+      if (!grid || !head) return;
+      head.textContent = `${y}年${m}月`;
+      const weekdays = ['日', '月', '火', '水', '木', '金', '土'];
+      const first = getFirstWeekday(y, m);
+      const days = getDaysInMonth(y, m);
+      const counts = readDateCounts();
+      let html = '';
+      weekdays.forEach(w => {
+        html += `<div class="weekday">${w}</div>`;
+      });
+      for (let i = 0; i < first; i++) {
+        html += '<div></div>';
+      }
+      for (let d = 1; d <= days; d++) {
+        const key = `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+        const c = counts[key] || 0;
+        let dot = '';
+        if (c >= 3) dot = '<span class="dot g"></span>';
+        else if (c >= 1) dot = '<span class="dot b"></span>';
+        html += `<div class="day"><span class="num">${d}</span><span>${dot}</span></div>`;
+      }
+      grid.innerHTML = html;
+    }
+    function changeMonth(delta) {
+      let y = currentCal.y, m = currentCal.m + delta;
+      if (m < 1) {
+        m = 12;
+        y--;
+      } else if (m > 12) {
+        m = 1;
+        y++;
+      }
+      currentCal = {y, m};
+      renderCalendar(y, m);
+    }
+
+    // ====== おすすめ表示 ======
+    function pickRandom(arr) {
+      return arr[Math.floor(Math.random() * arr.length)];
+    }
+    function renderRecommendations() {
+      const holder = qs('#recommendList');
+      if (!holder) return;
+      holder.innerHTML = '';
+      
+      // 運動・注意・生活から各1つずつ
+      const ex = pickRandom(STAMPS.exercise);
+      const at = pickRandom(STAMPS.attention);
+      const lf = pickRandom(STAMPS.life);
+      
+      [ex, at, lf].forEach((item, idx) => {
+        const catClass = item.cat === '運動' ? 'cat-exercise' : item.cat === '注意' ? 'cat-attention' : 'cat-lifestyle';
+        const badgeClass = item.cat === '運動' ? 'cat-ex' : item.cat === '注意' ? 'cat-at' : 'cat-life';
+        const videoBtn = item.video && item.url ? `<button class="btn secondary video-btn" onclick="openVideo('${item.url}')">動画</button>` : '';
+        
+        holder.insertAdjacentHTML('beforeend', `
+          <article class="card ${catClass}" data-stamp="${item.id}">
+            <div class="inline"><span class="badge ${badgeClass}">${item.cat}</span></div>
+            <div class="title">${item.title}</div>
+            <div class="sub">${item.desc || ''}</div>
+            <div class="inline" style="gap:8px; margin-top:auto">
+              <button class="btn" onclick="markDone('${item.id}'); this.textContent='完了！'; this.disabled=true;">押した</button>
+              ${videoBtn}
+            </div>
+          </article>
+        `);
+      });
+    }
+
+    // ====== 全スタンプ表示 ======
+    function renderAllStamps() {
+      const holder = qs('#stampsList');
+      if (!holder) return;
+      holder.innerHTML = '';
+      
+      ALL_STAMPS.forEach(item => {
+        const catClass = item.cat === '運動' ? 'cat-exercise' : item.cat === '高強度' ? 'cat-exercise' : item.cat === '注意' ? 'cat-attention' : 'cat-lifestyle';
+        const badgeClass = item.cat === '運動' ? 'cat-ex' : item.cat === '高強度' ? 'warn' : item.cat === '注意' ? 'cat-at' : 'cat-life';
+        const badgeText = item.cat === '高強度' ? '高強度' : item.cat;
+        const videoBtn = item.video && item.url ? `<button class="btn secondary video-btn" onclick="openVideo('${item.url}')">動画</button>` : '';
+        
+        holder.insertAdjacentHTML('beforeend', `
+          <article class="card ${catClass}">
+            <div class="inline"><span class="badge ${badgeClass}">${badgeText}</span></div>
+            <div class="title">${item.title}</div>
+            <div class="sub">${item.desc}</div>
+            <div class="inline" style="gap:8px;margin-top:auto">
+              <button class="btn" onclick="markDone('${item.id}'); this.textContent='完了！'; this.disabled=true;">押した</button>
+              ${videoBtn}
+            </div>
+          </article>
+        `);
+      });
+    }
+
+    // ====== 動画再生 ======
+    function openVideo(url) {
+      if (url && /^https?:\/\//.test(url)) {
+        window.open(url, '_blank', 'noopener');
+      } else {
+        alert('動画URLは準備中です');
+      }
+    }
+
+    // ====== CSV出力 ======
+    function buildCSV() {
+      const dk = todayKey();
+      const wk = weekKey();
+      const day = localStorage.getItem('day_count') || '0';
+      const week = localStorage.getItem('week_count') || '0';
+      const employeeId = localStorage.getItem('employee_id') || '';
+      const logs = JSON.parse(localStorage.getItem('stamp_logs') || '[]');
+      
+      let csv = 'employee_id,date,week,day_count,week_count,stamp_id,timestamp\n';
+      
+      if (logs.length > 0) {
+        logs.forEach(log => {
+          csv += `"${employeeId}","${log.date}","${wk}","${day}","${week}","${log.stampId}","${log.timestamp}"\n`;
+        });
+      } else {
+        csv += `"${employeeId}","${dk}","${wk}","${day}","${week}","",""\n`;
+      }
+      
+      return csv;
+    }
+    
+    function download(filename, text) {
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([text], {type: 'text/csv'}));
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }
+    
+    function exportCSV() {
+      const csv = buildCSV();
+      download(`activity_${todayKey()}.csv`, csv);
+      const el = qs('#submitMsg');
+      if (el) el.textContent = 'CSVを端末に保存しました。';
+    }
+    
+    async function submitCSV() {
+      const el = qs('#submitMsg');
+      const csv = buildCSV();
+      if (!GAS_URL) {
+        if (el) el.textContent = '送信先URLが未設定です。管理者へご連絡ください。';
+        return;
+      }
+      if (el) el.textContent = '送信中…';
+      try {
+        const employeeId = localStorage.getItem('employee_id') || '';
+        const payload = {
+          csvBase64: btoa(unescape(encodeURIComponent(csv))),
+          employeeId: employeeId,
+          appVersion: APP_VERSION,
+          filename: `activity_${todayKey()}`
+        };
+        const res = await fetch(GAS_URL + '?token=' + API_TOKEN, {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(payload)
+        });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const data = await res.json().catch(() => ({ok: false}));
+        if (data && (data.ok || data.status === 'ok')) {
+          if (el) el.textContent = '提出が完了しました。ご協力ありがとうございます。';
+        } else {
+          throw new Error(data?.error || '不明なエラー');
+        }
+      } catch (e) {
+        console.error(e);
+        if (el) el.textContent = '提出に失敗しました。時間をおいて再試行するか、CSV保存→手動提出をご利用ください。';
+      }
+    }
+
+    // ====== 社員ID管理 ======
+    function changeEmployeeId() {
+      const newId = prompt('新しい社員IDを入力してください', localStorage.getItem('employee_id') || '');
+      if (newId && newId.trim()) {
+        localStorage.setItem('employee_id', newId.trim());
+        alert('社員IDを変更しました');
+      }
+    }
+
+    // ====== 初期化 ======
+    function init() {
+      loadCounts();
+      updateCounters();
+      
+      const consent = localStorage.getItem('consent_v1') === 'true';
+      const employeeId = localStorage.getItem('employee_id');
+      
+      if (!consent) {
+        show('consentView');
+      } else if (!employeeId) {
+        show('employeeIdView');
+      } else {
+        show('homeView');
+      }
+      
+      const pm = qs('#prevMonthBtn'), nm = qs('#nextMonthBtn');
+      if (pm) pm.addEventListener('click', () => changeMonth(-1));
+      if (nm) nm.addEventListener('click', () => changeMonth(1));
+      
+      renderRecommendations();
+      renderAllStamps();
+      renderCalendar(currentCal.y, currentCal.m);
+    }
+
+    // ====== イベント ======
+    document.addEventListener('DOMContentLoaded', () => {
+      // 同意画面
+      const consentCheck = qs('#consentCheck');
+      const consentBtn = qs('#consentBtn');
+      if (consentCheck && consentBtn) {
+        consentCheck.addEventListener('change', () => {
+          consentBtn.disabled = !consentCheck.checked;
+        });
+        consentBtn.addEventListener('click', () => {
+          localStorage.setItem('consent_v1', 'true');
+          show('employeeIdView');
+        });
+      }
+      
+      // 社員ID登録
+      const employeeIdBtn = qs('#employeeIdBtn');
+      const employeeIdInput = qs('#employeeIdInput');
+      if (employeeIdBtn && employeeIdInput) {
+        employeeIdBtn.addEventListener('click', () => {
+          const id = employeeIdInput.value.trim();
+          if (!id) {
+            alert('社員IDを入力してください');
+            return;
+          }
+          localStorage.setItem('employee_id', id);
+          show('homeView');
+        });
+      }
+      
+      // タブ切替
+      [['#homeTab', 'homeView'], ['#stampsTab', 'stampsView'], ['#calendarTab', 'calendarView'], ['#menuTab', 'menuView'], ['#toMenuBtn', 'menuView']].forEach(([sel, view]) => {
+        const el = qs(sel);
+        if (el) {
+          el.addEventListener('click', () => show(view));
+        }
+      });
+      
+      // CSV出力
+      const exportBtn = qs('#exportBtn');
+      const submitBtn = qs('#submitBtn');
+      if (exportBtn) exportBtn.addEventListener('click', exportCSV);
+      if (submitBtn) submitBtn.addEventListener('click', submitCSV);
+    });
+
+    // 起動
+    init();
+  </script>
+</body>
+</html>
