@@ -39,7 +39,20 @@
 
     .panel{border:1px solid var(--border);background:var(--panel);border-radius:16px;padding:16px;box-shadow:var(--shadow)}
     .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;margin-top:12px}
-    .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px;min-height:160px}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:12px;display:flex;flex-direction:column;gap:8px;min-height:100px}
+    /* スマホで3つ見えるように縦サイズ削減 */
+    @media (max-width: 768px) {
+      .cards{grid-template-columns:1fr}
+      .card{min-height:80px;padding:10px}
+    }
+    
+    /* スタンプ一覧で3列表示 */
+    .stamps-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:16px}
+    .stamp-category{display:flex;flex-direction:column;gap:10px}
+    .stamp-category h4{margin:0 0 8px;padding:8px;background:var(--card);border-radius:8px;text-align:center}
+    @media (max-width: 768px) {
+      .stamps-grid{grid-template-columns:1fr;gap:20px}
+    }
     .card.cat-exercise{border-top:4px solid var(--cat-ex)}
     .card.cat-attention{border-top:4px solid var(--cat-at)}
     .card.cat-lifestyle{border-top:4px solid var(--cat-life)}
@@ -77,15 +90,16 @@
     <!-- Step0: 同意画面 -->
     <section id="consentView" class="panel hidden" aria-live="polite">
       <h2>行動支援アプリ利用に関する同意書</h2>
-      <div class="small">
-        <p>・本アプリは端末内のローカル保存で動作し、サーバー送信は行いません。</p>
-        <p>・記録はCSVで出力し、各社指定の方法で提出します。</p>
-        <p>・本アプリの利用目的が健康づくり・行動支援の一環であり、個人の評価等には用いられません。</p>
+      <div class="small" style="line-height:1.7">
+        <p style="font-weight:700;margin-bottom:8px">私は、本アプリが通信を行わず、端末内でのみ動作するものであることを理解しました。</p>
+        <p>・アプリ内で記録されるデータ(押印履歴・利用回数など)は、自身の端末内にのみ保存され、外部サーバ等への送信・収集は行われません。</p>
+        <p>・本アプリの利用目的が健康づくり・行動支援の一環であり、個人の評価等には用いられないことを確認しました。</p>
+        <p>・利用終了後は、アプリファイルの削除およびブラウザデータの消去により、端末内データを自ら破棄します。</p>
       </div>
-      <div class="inline" style="margin-top:10px">
-        <label><input type="checkbox" id="consentCheck"/> 同意します</label>
-        <button class="btn" id="consentBtn" disabled>次へ</button>
+      <div class="inline" style="margin-top:14px">
+        <label style="font-weight:700"><input type="checkbox" id="consentCheck"/> 上記の内容を読み、同意した上で利用を開始します</label>
       </div>
+      <button class="btn" id="consentBtn" disabled style="margin-top:10px">次へ</button>
     </section>
 
     <!-- Step0.5: 社員ID入力 -->
@@ -101,8 +115,9 @@
 
     <!-- HOME -->
     <section id="homeView" class="panel hidden">
-      <div class="inline" style="justify-content:space-between">
-        <div class="inline"><span class="badge">自由に選べる！</span><span class="small">「スタンプ一覧」から好きな項目を選択できます</span></div>
+      <div style="margin-bottom:14px">
+        <div class="inline" style="margin-bottom:8px"><span class="badge accent">💚 1分でできる健康行動！</span></div>
+        <p class="small" style="line-height:1.6">・<strong>迷ったら</strong>：今日のおすすめスタンプに取り組む<br/>・<strong>オーダーメイド</strong>：「スタンプ一覧」から好きな項目を選択できます</p>
       </div>
       <h3 style="margin:18px 4px 6px">今日のおすすめスタンプ</h3>
       <div class="cards" id="recommendList"></div>
@@ -127,7 +142,7 @@
     <!-- スタンプ一覧 -->
     <section id="stampsView" class="panel hidden">
       <div class="inline" style="justify-content:space-between;align-items:center">
-        <h3 style="margin:0">スタンプ一覧（全30）</h3>
+        <h3 style="margin:0">スタンプ一覧（全31）</h3>
         <button class="btn ghost" onclick="show('homeView')">ホームへ戻る</button>
       </div>
       <div class="cards" id="stampsList"></div>
@@ -151,7 +166,10 @@
     <section id="menuView" class="panel hidden">
       <div class="menu-list" style="display:grid;gap:10px">
         <div class="inline" style="justify-content:space-between;align-items:center;border:1px solid var(--border);background:var(--panel);border-radius:14px;padding:14px">
-          <span class="label" style="font-weight:800">取り組み記録の提出</span>
+          <div>
+            <div class="label" style="font-weight:800">取り組み記録の提出</div>
+            <div class="small" style="margin-top:4px">週に一度の提出を心がけましょう（曜日固定すると定着しやすい）</div>
+          </div>
           <button class="btn ghost" onclick="show('submitView')">提出</button>
         </div>
         <div class="inline" style="justify-content:space-between;align-items:center;border:1px solid var(--border);background:var(--panel);border-radius:14px;padding:14px">
@@ -164,13 +182,12 @@
     <!-- 提出 -->
     <section id="submitView" class="panel hidden">
       <h3 style="margin-top:0">取り組み記録の提出</h3>
-      <p class="small">CSVを端末へ保存、または管理者指定の提出先へ送信します。</p>
-      <div class="inline" style="gap:10px;flex-wrap:wrap">
-        <button class="btn" id="exportBtn">CSVを保存</button>
-        <button class="btn secondary" id="submitBtn">提出（GAS経由）</button>
+      <p class="small" style="margin-bottom:4px">週に一度の提出を心がけましょう（曜日固定すると定着しやすい）</p>
+      <div class="inline" style="gap:10px;flex-wrap:wrap;margin-top:12px">
+        <button class="btn" id="submitBtn" style="font-size:16px;padding:12px 20px">取り組みを提出</button>
+        <button class="btn ghost" id="exportBtn" style="font-size:12px">CSVを保存</button>
       </div>
-      <p id="submitMsg" class="small" style="margin-top:8px"></p>
-      <button class="btn ghost" style="margin-top:8px" onclick="show('menuView')">メニューに戻る</button>
+      <p id="submitMsg" class="small" style="margin-top:12px"></p>
     </section>
 
     <nav class="tabbar">
@@ -225,7 +242,8 @@
         {id:'life11',cat:'生活',title:'アイコンタクトを意識した仕事',desc:'相手の目を一度しっかり見る',url:'',video:false},
         {id:'life12',cat:'生活',title:'動作の順番を声に出して確認',desc:'1フレーズでOK',url:'',video:false},
         {id:'life13',cat:'生活',title:'ハンドリングは膝を使う',desc:'腕じゃなく下半身で',url:'',video:false},
-        {id:'life14',cat:'生活',title:'目線を遠くへ',desc:'30～60分ごとに遠くへ',url:'',video:false}
+        {id:'life14',cat:'生活',title:'目線を遠くへ',desc:'30～60分ごとに遠くへ',url:'',video:false},
+        {id:'life15',cat:'生活',title:'スタンプを他の人に紹介',desc:'自分の実施したスタンプを誰かに共有する／話す',url:'',video:false}
       ]
     };
 
@@ -254,7 +272,11 @@
         localStorage.setItem('day_count', '0');
       }
       const wk = weekKey();
-      if (localStorage.getItem('week_key') !== wk) {
+      const storedWeek = localStorage.getItem('week_key');
+      if (storedWeek !== wk) {
+        // 週が変わったら先週のカウントを保存
+        const oldCount = localStorage.getItem('week_count') || '0';
+        localStorage.setItem('last_week_count', oldCount);
         localStorage.setItem('week_key', wk);
         localStorage.setItem('week_count', '0');
       }
@@ -272,6 +294,48 @@
       const wc = qs('#weekCount');
       if (dc) dc.textContent = localStorage.getItem('day_count') || '0';
       if (wc) wc.textContent = localStorage.getItem('week_count') || '0';
+      
+      // 週比較メッセージ表示
+      updateWeeklyMessage();
+    }
+    
+    function updateWeeklyMessage() {
+      const currentWeek = parseInt(localStorage.getItem('week_count') || '0', 10);
+      const lastWeek = parseInt(localStorage.getItem('last_week_count') || '0', 10);
+      
+      let message = '';
+      if (lastWeek > 0) {
+        const diff = currentWeek - lastWeek;
+        const diffPercent = Math.round((diff / lastWeek) * 100);
+        
+        if (diff > 0) {
+          message = `🎉 先週よりも${Math.abs(diffPercent)}%良いペース！`;
+        } else if (diff < 0) {
+          message = `💭 先週に比べて選択的になりました`;
+        } else {
+          message = `✅ 先週と同じペースです`;
+        }
+      }
+      
+      // メッセージ表示用の要素を探す
+      let msgEl = qs('#weeklyComparisonMsg');
+      if (!msgEl) {
+        // 今週の取り組みの下に追加
+        const weekCountDiv = qs('#weekCount');
+        if (weekCountDiv && weekCountDiv.parentElement && weekCountDiv.parentElement.parentElement) {
+          const parentDiv = weekCountDiv.parentElement.parentElement;
+          msgEl = document.createElement('div');
+          msgEl.id = 'weeklyComparisonMsg';
+          msgEl.className = 'small';
+          msgEl.style.marginTop = '8px';
+          msgEl.style.fontWeight = '600';
+          parentDiv.appendChild(msgEl);
+        }
+      }
+      
+      if (msgEl) {
+        msgEl.textContent = message;
+      }
     }
 
     // ====== 画面切替 ======
@@ -414,7 +478,13 @@
       [ex, at, lf].forEach((item, idx) => {
         const catClass = item.cat === '運動' ? 'cat-exercise' : item.cat === '注意' ? 'cat-attention' : 'cat-lifestyle';
         const badgeClass = item.cat === '運動' ? 'cat-ex' : item.cat === '注意' ? 'cat-at' : 'cat-life';
-        const videoBtn = item.video && item.url ? `<button class="btn secondary video-btn" onclick="openVideo('${item.url}')">動画</button>` : '';
+        // 運動・高強度は常に動画ボタン表示、それ以外はURLがある場合のみ
+        let videoBtn = '';
+        if (item.cat === '運動' || item.cat === '高強度') {
+          videoBtn = `<button class="btn secondary video-btn" onclick="openVideo('${item.url}')">動画</button>`;
+        } else if (item.video && item.url) {
+          videoBtn = `<button class="btn secondary video-btn" onclick="openVideo('${item.url}')">動画</button>`;
+        }
         
         holder.insertAdjacentHTML('beforeend', `
           <article class="card ${catClass}" data-stamp="${item.id}">
@@ -422,7 +492,7 @@
             <div class="title">${item.title}</div>
             <div class="sub">${item.desc || ''}</div>
             <div class="inline" style="gap:8px; margin-top:auto">
-              <button class="btn" onclick="markDone('${item.id}'); this.textContent='完了！'; this.disabled=true;">押した</button>
+              <button class="btn" onclick="markDone('${item.id}'); this.textContent='完了！'; this.disabled=true;">実施した</button>
               ${videoBtn}
             </div>
           </article>
@@ -430,30 +500,59 @@
       });
     }
 
-    // ====== 全スタンプ表示 ======
+    // ====== 全スタンプ表示 (3列カテゴリ別) ======
     function renderAllStamps() {
       const holder = qs('#stampsList');
       if (!holder) return;
-      holder.innerHTML = '';
       
-      ALL_STAMPS.forEach(item => {
+      // カテゴリ別に組織化
+      const exerciseStamps = [...STAMPS.exercise, ...STAMPS.high]; // 運動+高強度
+      const attentionStamps = STAMPS.attention; // 注意
+      const lifeStamps = STAMPS.life; // 生活
+      
+      holder.innerHTML = `
+        <div class="stamps-grid">
+          <div class="stamp-category">
+            <h4 style="background:#dcfce7;color:#166534;border:1px solid #bbf7d0">🏃 運動・高強度</h4>
+            <div class="cards" style="grid-template-columns:1fr">${renderCategoryStamps(exerciseStamps)}</div>
+          </div>
+          <div class="stamp-category">
+            <h4 style="background:#dbeafe;color:#1e40af;border:1px solid #bfdbfe">🧠 注意</h4>
+            <div class="cards" style="grid-template-columns:1fr">${renderCategoryStamps(attentionStamps)}</div>
+          </div>
+          <div class="stamp-category">
+            <h4 style="background:#fef3c7;color:#78350f;border:1px solid #fde68a">🌱 生活</h4>
+            <div class="cards" style="grid-template-columns:1fr">${renderCategoryStamps(lifeStamps)}</div>
+          </div>
+        </div>
+      `;
+    }
+    
+    function renderCategoryStamps(stamps) {
+      return stamps.map(item => {
         const catClass = item.cat === '運動' ? 'cat-exercise' : item.cat === '高強度' ? 'cat-exercise' : item.cat === '注意' ? 'cat-attention' : 'cat-lifestyle';
         const badgeClass = item.cat === '運動' ? 'cat-ex' : item.cat === '高強度' ? 'warn' : item.cat === '注意' ? 'cat-at' : 'cat-life';
         const badgeText = item.cat === '高強度' ? '高強度' : item.cat;
-        const videoBtn = item.video && item.url ? `<button class="btn secondary video-btn" onclick="openVideo('${item.url}')">動画</button>` : '';
+        // 運動・高強度は常に動画ボタン表示、それ以外はURLがある場合のみ
+        let videoBtn = '';
+        if (item.cat === '運動' || item.cat === '高強度') {
+          videoBtn = `<button class="btn secondary video-btn" onclick="openVideo('${item.url}')">動画</button>`;
+        } else if (item.video && item.url) {
+          videoBtn = `<button class="btn secondary video-btn" onclick="openVideo('${item.url}')">動画</button>`;
+        }
         
-        holder.insertAdjacentHTML('beforeend', `
+        return `
           <article class="card ${catClass}">
             <div class="inline"><span class="badge ${badgeClass}">${badgeText}</span></div>
             <div class="title">${item.title}</div>
             <div class="sub">${item.desc}</div>
             <div class="inline" style="gap:8px;margin-top:auto">
-              <button class="btn" onclick="markDone('${item.id}'); this.textContent='完了！'; this.disabled=true;">押した</button>
+              <button class="btn" onclick="markDone('${item.id}'); this.textContent='完了！'; this.disabled=true;">実施した</button>
               ${videoBtn}
             </div>
           </article>
-        `);
-      });
+        `;
+      }).join('');
     }
 
     // ====== 動画再生 ======
