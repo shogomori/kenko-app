@@ -221,7 +221,7 @@
       ],
       high: [
         {id:'jack',cat:'高強度',title:'ジャックナイフストレッチ（立位）',desc:'20秒で前屈が柔らかくなる！？',url:'https://youtu.be/nAP1QCuUdAY',video:true},
-        {id:'balance',cat:'高強度',title:'バランスチャレンジ（立位）',desc:'片脚立ちの極意を手に入れよう！',url:'https://youtu.be/mk753aeMa3o',video:true},
+        {id:'balance',cat:'高強度',title:'バランスチャレンジ（立位）',desc:'片脚立ちの極意を手に入れよう！',url:'',video:true},
         {id:'drawing',cat:'高強度',title:'お絵描きバランス（立位）',desc:'遊びに見えて難易度高いバランス練習',url:'https://youtu.be/nanwI0Jf4Q8',video:true},
         {id:'banzai',cat:'高強度',title:'全身バンザイ（立位）',desc:'トータルエクササイズ！強度高め',url:'https://youtu.be/G4Neqz-dsuA',video:true}
       ],
@@ -483,9 +483,9 @@
       [ex, at, lf].forEach((item, idx) => {
         const catClass = item.cat === '運動' ? 'cat-exercise' : item.cat === '注意' ? 'cat-attention' : 'cat-lifestyle';
         const badgeClass = item.cat === '運動' ? 'cat-ex' : item.cat === '注意' ? 'cat-at' : 'cat-life';
-        // 運動・高強度は常に動画ボタン表示、それ以外はURLがある場合のみ
+        // 運動・高強度・注意は常に動画ボタン表示、それ以外はURLがある場合のみ
         let videoBtn = '';
-        if (item.cat === '運動' || item.cat === '高強度') {
+        if (item.cat === '運動' || item.cat === '高強度' || item.cat === '注意') {
           videoBtn = `<button class="btn secondary video-btn" onclick="openVideo('${item.url}')">動画</button>`;
         } else if (item.video && item.url) {
           videoBtn = `<button class="btn secondary video-btn" onclick="openVideo('${item.url}')">動画</button>`;
@@ -538,9 +538,9 @@
         const catClass = item.cat === '運動' ? 'cat-exercise' : item.cat === '高強度' ? 'cat-exercise' : item.cat === '注意' ? 'cat-attention' : 'cat-lifestyle';
         const badgeClass = item.cat === '運動' ? 'cat-ex' : item.cat === '高強度' ? 'warn' : item.cat === '注意' ? 'cat-at' : 'cat-life';
         const badgeText = item.cat === '高強度' ? '高強度' : item.cat;
-        // 運動・高強度は常に動画ボタン表示、それ以外はURLがある場合のみ
+        // 運動・高強度・注意は常に動画ボタン表示、それ以外はURLがある場合のみ
         let videoBtn = '';
-        if (item.cat === '運動' || item.cat === '高強度') {
+        if (item.cat === '運動' || item.cat === '高強度' || item.cat === '注意') {
           videoBtn = `<button class="btn secondary video-btn" onclick="openVideo('${item.url}')">動画</button>`;
         } else if (item.video && item.url) {
           videoBtn = `<button class="btn secondary video-btn" onclick="openVideo('${item.url}')">動画</button>`;
