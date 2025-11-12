@@ -49,9 +49,14 @@
     /* スタンプ一覧で3列表示 */
     .stamps-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:16px}
     .stamp-category{display:flex;flex-direction:column;gap:10px}
-    .stamp-category h4{margin:0 0 8px;padding:8px;background:var(--card);border-radius:8px;text-align:center}
+    .stamp-category h4{margin:0 0 8px;padding:8px;background:var(--card);border-radius:8px;text-align:center;font-size:13px}
     @media (max-width: 768px) {
-      .stamps-grid{grid-template-columns:1fr;gap:20px}
+      .stamps-grid{grid-template-columns:repeat(3,1fr);gap:8px}
+      .stamp-category h4{font-size:11px;padding:6px}
+      .stamp-category .card{font-size:11px}
+      .stamp-category .card .title{font-size:12px}
+      .stamp-category .card .sub{font-size:10px}
+      .stamp-category .card .btn{font-size:10px;padding:6px 8px}
     }
     .card.cat-exercise{border-top:4px solid var(--cat-ex)}
     .card.cat-attention{border-top:4px solid var(--cat-at)}
